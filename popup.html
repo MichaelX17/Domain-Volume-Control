@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Domain Volume Master</h1>
+      <div class="current-volume" id="currentVolume">100%</div>
+    </div>
+
+    <div class="volume-controls">
+      <div class="slider-container">
+        <input type="range" id="volumeSlider" min="0" max="500" value="100" class="slider">
+        <div class="slider-labels">
+          <span>0%</span>
+          <span>100%</span>
+          <span>500%</span>
+        </div>
+      </div>
+
+      <div class="button-grid">
+        <button id="muteButton" class="btn neon-btn" data-color="#ff4444">
+          <span class="btn-icon">🔇</span>
+          Mute
+        </button>
+        <button id="resetButton" class="btn neon-btn" data-color="#44ff44">
+          <span class="btn-icon">↺</span>
+          Reset
+        </button>
+        <button id="maxButton" class="btn neon-btn" data-color="#4444ff">
+          <span class="btn-icon">⚡</span>
+          Max
+        </button>
+      </div>
+    </div>
+
+    <div class="customization">
+      <h3>Custom Colors</h3>
+      <div class="color-picker">
+        <label for="neonColor">Bottom Colors:</label>
+        <input type="color" id="neonColor" value="#00ff00">
+      </div>
+      <div class="preset-colors">
+        <button class="color-preset" data-color="#ff00ff" style="background-color: #ff00ff;"></button>
+        <button class="color-preset" data-color="#00ff00" style="background-color: #00ff00;"></button>
+        <button class="color-preset" data-color="#ffff00" style="background-color: #ffff00;"></button>
+        <button class="color-preset" data-color="#00ffff" style="background-color: #00ffff;"></button>
+        <button class="color-preset" data-color="#ff4444" style="background-color: #ff4444;"></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
