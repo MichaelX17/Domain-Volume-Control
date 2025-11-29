@@ -11,14 +11,6 @@
     "default_popup": "popup.html",
     "default_title": "Tab Volume Multiplier"
   },
-"content_scripts": [
-  {
-    "matches": ["<all_urls>"],
-    "js": ["content_script.js"],
-    "run_at": "document_start",
-    "all_frames": true
-  }
-],
   "icons": {
     "16": "icons/favicon.png",
     "48": "icons/favicon.png",

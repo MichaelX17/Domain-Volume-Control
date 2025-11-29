@@ -74,7 +74,13 @@ function applyMultiplierToElement(el) {
 
   // The final gain is the user's multiplier * the native player's volume.
   const nativeVolume = el.volume;
-  const effectiveGain = pageState.muted ? 0 : pageState.multiplier * nativeVolume;
+  let effectiveGain = pageState.muted ? 0 : pageState.multiplier * nativeVolume;
+
+  // YouTube's audio processing seems to significantly lower the raw signal power.
+  // This is a workaround to boost it back up to a reasonable level.
+  if (window.location.hostname.includes('youtube.com')) {
+    effectiveGain *= 4.0;
+  }
 
   // Set the gain on the gain node
   info.gainNode.gain.setValueAtTime(effectiveGain, pageState.audioContext.currentTime);
