@@ -1,15 +1,15 @@
 {
-  "name": "Domain Volume Control",
-  "version": "1.2",
-  "description": "Controls the volume of each Domain with advanced features.",
-  "permissions": ["activeTab", "storage", "scripting", "tabs"],
+  "name": "Tab Volume Multiplier",
+  "version": "2.0",
+  "description": "Multiplies the volume of the current tab.",
+  "permissions": ["activeTab", "scripting", "tabs"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Domain Volume Control"
+    "default_title": "Tab Volume Multiplier"
   },
 "content_scripts": [
   {

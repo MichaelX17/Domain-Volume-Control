@@ -1,211 +1,106 @@
-let currentTab = null;
+// popup.js - Simplified for per-tab control
 
-// Consistent configuration model
 let currentConfig = {
-  domain: null,     // current domain (without www, lowercase)
-  volume: 1.0,      // here volume acts as "multiplier" (1.0 = 100%)
+  volume: 1.0, // Acts as our multiplier
   muted: false
 };
 
-let currentNeonColor = '#00ff00';
-
 const volumeSlider = document.getElementById('volumeSlider');
-const currentVolume = document.getElementById('currentVolume');
+const currentVolumeLabel = document.getElementById('currentVolume');
 const muteButton = document.getElementById('muteButton');
 const resetButton = document.getElementById('resetButton');
 const maxButton = document.getElementById('maxButton');
-const neonColorPicker = document.getElementById('neonColor');
 
 // -----------------------------
 // INITIALIZATION
 // -----------------------------
 document.addEventListener('DOMContentLoaded', async () => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  currentTab = tab;
-
-  const domain = extractDomain(tab.url);
-  currentConfig.domain = domain;
-
-  await loadNeonColor();
-  await loadDomainConfig(domain);
-  applyNeonColor(currentNeonColor);
-
-  // Ask background to apply configuration to current tab (if background can do it)
-  // use enforceDomain (not enforceVolume — that was the invalid action)
-  await ensureDomainEnforced(domain);
-});
-
-// -----------------------------
-// Load domain configuration
-// -----------------------------
-async function loadDomainConfig(domain) {
+  // Load the current tab's state
   try {
-    const response = await chrome.runtime.sendMessage({
-      action: 'getDomainConfig',
-      domain
-    });
-
-    // background returns { volume: multiplier, muted: bool, nativeVolume? }
-    if (response && typeof response.volume === 'number') {
-      currentConfig.volume = response.volume;
-      currentConfig.muted = !!response.muted;
-    } else {
-      currentConfig.volume = 1.0;
-      currentConfig.muted = false;
+    const state = await chrome.runtime.sendMessage({ action: 'getTabState' });
+    if (state && typeof state.volume === 'number') {
+      currentConfig.volume = state.volume;
+      currentConfig.muted = state.muted;
     }
   } catch (e) {
-    console.error('Error reading domain:', e);
-    currentConfig.volume = 1.0;
-    currentConfig.muted = false;
+    // This can happen if the content script isn't ready. Default is fine.
+    console.warn("Could not get tab state, using default.", e);
   }
 
   updateUI();
-}
+});
+
 
 // -----------------------------
-// Save domain configuration
+// Send volume changes to the background script
 // -----------------------------
-async function saveDomainConfig() {
-  if (!currentConfig.domain) return;
-
-  // Send explicit multiplier (avoids ambiguities)
-  await chrome.runtime.sendMessage({
-    action: 'setDomainConfig',
-    domain: currentConfig.domain,
-    multiplier: currentConfig.volume,
-    muted: currentConfig.muted
-  });
-}
-
-// -----------------------------
-// Extract domain (consistent)
-// -----------------------------
-function extractDomain(url) {
+async function applyVolumeChange() {
   try {
-    const u = new URL(url);
-    return u.hostname.replace(/^www\./i, '').toLowerCase(); // facebook.com instead of www.facebook.com
-  } catch {
-    return null;
-  }
-}
-
-// -----------------------------
-// NEON
-// -----------------------------
-async function loadNeonColor() {
-  const res = await chrome.storage.local.get(['neonColor']);
-  if (res.neonColor) {
-    currentNeonColor = res.neonColor;
-    neonColorPicker.value = currentNeonColor;
-  }
-}
-
-function applyNeonColor(color) {
-  document.documentElement.style.setProperty('--neon-color', color);
-  const buttons = document.querySelectorAll('.neon-btn');
-  buttons.forEach(btn => btn.style.setProperty('--btn-color', color));
-}
-
-// -----------------------------
-// Ask background to apply config to tab/domain
-// -----------------------------
-async function ensureDomainEnforced(domain) {
-  if (!domain) return;
-  try {
-    const response = await chrome.runtime.sendMessage({
-      action: 'enforceDomain',
-      domain,
-      tabId: currentTab ? currentTab.id : undefined
+    await chrome.runtime.sendMessage({
+      action: 'setTabVolume',
+      multiplier: currentConfig.volume,
+      muted: currentConfig.muted
     });
-
-    // response.success is true when background managed to propagate
-    if (!response || !response.success) {
-      // only warn, don't break UI
-      console.warn('Could not force configuration application in tab.');
-    }
   } catch (e) {
-    console.warn('Error requesting enforceDomain:', e);
+    console.error("Failed to set tab volume", e);
+    // You could add some UI feedback here if needed
   }
 }
 
 // -----------------------------
-// UI
+// UI Update
 // -----------------------------
 function updateUI() {
-  // Show "percentage" equivalent to multiplier * 100 (e.g.: multiplier 1.0 => 100%)
   const displayPercent = Math.round(currentConfig.volume * 100);
   volumeSlider.value = Math.min(500, displayPercent);
-  currentVolume.textContent = `${displayPercent}%`;
+  currentVolumeLabel.textContent = `${displayPercent}%`;
 
   if (currentConfig.muted || currentConfig.volume === 0) {
     muteButton.innerHTML = '<span class="btn-icon">🔊</span>Unmute';
-    muteButton.style.setProperty('--btn-color', '#44ff44');
   } else {
     muteButton.innerHTML = '<span class="btn-icon">🔇</span>Mute';
-    muteButton.style.setProperty('--btn-color', '#ff4444');
   }
 }
 
 // -----------------------------
-// EVENTS
+// EVENT LISTENERS
 // -----------------------------
 volumeSlider.addEventListener('input', async (e) => {
-  const volume = parseInt(e.target.value, 10) / 100; // slider -> multiplier
-  currentConfig.volume = volume;
-  currentConfig.muted = volume === 0;
-
-  await saveDomainConfig();
-  // Ask background to apply it to domain tab(s)
-  await ensureDomainEnforced(currentConfig.domain);
+  const newVolume = parseInt(e.target.value, 10) / 100;
+  currentConfig.volume = newVolume;
+  // If user slides to 0, it's muted. If they slide away from 0, it's unmuted.
+  if (newVolume > 0 && currentConfig.muted) {
+    currentConfig.muted = false;
+  }
+  
   updateUI();
 });
 
-muteButton.addEventListener('click', async () => {
-  const muted = !currentConfig.muted;
-  currentConfig.muted = muted;
-  currentConfig.volume = muted ? 0 : 1;
+volumeSlider.addEventListener('change', async (e) => {
+    // Fires when the user releases the slider
+    await applyVolumeChange();
+});
 
-  await saveDomainConfig();
-  await ensureDomainEnforced(currentConfig.domain);
+muteButton.addEventListener('click', async () => {
+  currentConfig.muted = !currentConfig.muted;
+  // If unmuting and volume is 0, set to 100% as a sensible default
+  if (!currentConfig.muted && currentConfig.volume === 0) {
+    currentConfig.volume = 1.0;
+  }
   updateUI();
+  await applyVolumeChange();
 });
 
 resetButton.addEventListener('click', async () => {
   currentConfig.volume = 1.0;
   currentConfig.muted = false;
-
-  await saveDomainConfig();
-  await ensureDomainEnforced(currentConfig.domain);
   updateUI();
+  await applyVolumeChange();
 });
 
 maxButton.addEventListener('click', async () => {
   currentConfig.volume = 5.0;
   currentConfig.muted = false;
-
-  await saveDomainConfig();
-  await ensureDomainEnforced(currentConfig.domain);
   updateUI();
-});
-
-// -----------------------------
-// Color Presets
-// -----------------------------
-neonColorPicker.addEventListener('input', (e) => {
-  currentNeonColor = e.target.value;
-  applyNeonColor(currentNeonColor);
-  chrome.storage.local.set({ neonColor: currentNeonColor });
-});
-
-document.querySelectorAll('.color-preset').forEach(preset => {
-  preset.addEventListener('click', (e) => {
-    const color = e.target.getAttribute('data-color');
-    currentNeonColor = color;
-    neonColorPicker.value = color;
-    applyNeonColor(color);
-    chrome.storage.local.set({ neonColor: color });
-
-    document.querySelectorAll('.color-preset').forEach(p => p.classList.remove('active'));
-    e.target.classList.add('active');
-  });
+  await applyVolumeChange();
 });
