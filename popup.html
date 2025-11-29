@@ -25,18 +25,33 @@
       </div>
 
       <div class="button-grid">
-        <button id="muteButton" class="btn">
+        <button id="muteButton" class="btn neon-btn">
           <span class="btn-icon">🔇</span>
           Mute
         </button>
-        <button id="resetButton" class="btn">
+        <button id="resetButton" class="btn neon-btn">
           <span class="btn-icon">↺</span>
           Reset
         </button>
-        <button id="maxButton" class="btn">
+        <button id="maxButton" class="btn neon-btn">
           <span class="btn-icon">⚡</span>
           Max
         </button>
+      </div>
+    </div>
+
+    <div class="customization">
+      <h3>Accent Color</h3>
+      <div class="color-picker">
+        <label for="neonColor">Color:</label>
+        <input type="color" id="neonColor" value="#00ff00">
+      </div>
+      <div class="preset-colors">
+        <button class="color-preset" data-color="#ff00ff" style="background-color: #ff00ff;"></button>
+        <button class="color-preset" data-color="#00ff00" style="background-color: #00ff00;"></button>
+        <button class="color-preset" data-color="#ffff00" style="background-color: #ffff00;"></button>
+        <button class="color-preset" data-color="#00ffff" style="background-color: #00ffff;"></button>
+        <button class="color-preset" data-color="#ff4444" style="background-color: #ff4444;"></button>
       </div>
     </div>
   </div>

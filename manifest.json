@@ -2,7 +2,7 @@
   "name": "Tab Volume Multiplier",
   "version": "2.0",
   "description": "Multiplies the volume of the current tab.",
-  "permissions": ["activeTab", "scripting", "tabs"],
+  "permissions": ["activeTab", "scripting", "tabs", "storage"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"

@@ -5,11 +5,27 @@ let currentConfig = {
   muted: false
 };
 
+let currentNeonColor = '#00ff00';
+
 const volumeSlider = document.getElementById('volumeSlider');
 const currentVolumeLabel = document.getElementById('currentVolume');
 const muteButton = document.getElementById('muteButton');
 const resetButton = document.getElementById('resetButton');
 const maxButton = document.getElementById('maxButton');
+const neonColorPicker = document.getElementById('neonColor');
+
+// Debounce function
+function debounce(func, delay) {
+  let timeout;
+  return function(...args) {
+    const context = this;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(context, args), delay);
+  };
+}
+
+// Debounced version of applyVolumeChange
+const debouncedApplyVolumeChange = debounce(applyVolumeChange, 100); // 100ms debounce
 
 // -----------------------------
 // INITIALIZATION
@@ -27,6 +43,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.warn("Could not get tab state, using default.", e);
   }
 
+  await loadNeonColor();
+  applyNeonColor(currentNeonColor);
   updateUI();
 });
 
@@ -57,15 +75,37 @@ function updateUI() {
 
   if (currentConfig.muted || currentConfig.volume === 0) {
     muteButton.innerHTML = '<span class="btn-icon">🔊</span>Unmute';
+    muteButton.style.setProperty('--btn-color', '#44ff44'); // Green for Unmute
   } else {
     muteButton.innerHTML = '<span class="btn-icon">🔇</span>Mute';
+    muteButton.style.setProperty('--btn-color', '#ff4444'); // Red for Mute
   }
+}
+
+// -----------------------------
+// NEON COLOR
+// -----------------------------
+async function loadNeonColor() {
+  const res = await chrome.storage.local.get(['neonColor']);
+  if (res.neonColor) {
+    currentNeonColor = res.neonColor;
+    neonColorPicker.value = currentNeonColor;
+  }
+}
+
+function applyNeonColor(color) {
+  // Set the main theme color for the slider
+  document.documentElement.style.setProperty('--neon-color', color);
+  
+  // Apply the theme color to generic buttons, but not the mute button
+  resetButton.style.setProperty('--btn-color', color);
+  maxButton.style.setProperty('--btn-color', color);
 }
 
 // -----------------------------
 // EVENT LISTENERS
 // -----------------------------
-volumeSlider.addEventListener('input', async (e) => {
+volumeSlider.addEventListener('input', (e) => { // Removed async here
   const newVolume = parseInt(e.target.value, 10) / 100;
   currentConfig.volume = newVolume;
   // If user slides to 0, it's muted. If they slide away from 0, it's unmuted.
@@ -74,11 +114,7 @@ volumeSlider.addEventListener('input', async (e) => {
   }
   
   updateUI();
-});
-
-volumeSlider.addEventListener('change', async (e) => {
-    // Fires when the user releases the slider
-    await applyVolumeChange();
+  debouncedApplyVolumeChange(); // Call debounced function
 });
 
 muteButton.addEventListener('click', async () => {
@@ -103,4 +139,24 @@ maxButton.addEventListener('click', async () => {
   currentConfig.muted = false;
   updateUI();
   await applyVolumeChange();
+});
+
+// Color Presets
+neonColorPicker.addEventListener('input', (e) => {
+  currentNeonColor = e.target.value;
+  applyNeonColor(currentNeonColor);
+  chrome.storage.local.set({ neonColor: currentNeonColor });
+});
+
+document.querySelectorAll('.color-preset').forEach(preset => {
+  preset.addEventListener('click', (e) => {
+    const color = e.target.getAttribute('data-color');
+    currentNeonColor = color;
+    neonColorPicker.value = color;
+    applyNeonColor(color);
+    chrome.storage.local.set({ neonColor: color });
+
+    document.querySelectorAll('.color-preset').forEach(p => p.classList.remove('active'));
+    e.target.classList.add('active');
+  });
 });

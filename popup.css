@@ -6,7 +6,7 @@
 }
 
 body {
-  width: 320px; /* A more standard popup width */
+  width: 600px;
   background: #2d2d2d;
   color: #ffffff;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -42,7 +42,7 @@ body {
 }
 
 .volume-controls {
-  margin-bottom: 10px;
+  margin-bottom: 20px;
 }
 
 .slider-container {
@@ -63,8 +63,9 @@ body {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #007bff; /* A standard blue color */
+  background: var(--neon-color, #00ff00);
   cursor: pointer;
+  box-shadow: 0 0 10px var(--neon-color, #00ff00);
 }
 
 .slider-labels {
@@ -84,28 +85,97 @@ body {
 
 .btn {
   padding: 8px 5px;
-  border: 1px solid #555;
+  border: none;
   border-radius: 6px;
-  background: #444;
+  background: #333; /* Changed background */
   color: white;
   cursor: pointer;
   font-size: 12px;
   font-weight: 500;
-  transition: background-color 0.2s ease;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
 }
 
-.btn:hover {
-    background: #555;
+.neon-btn {
+  border: 1px solid var(--btn-color, #00ff00);
+  box-shadow: 0 0 5px var(--btn-color, #9900ff);
+  color: var(--btn-color, #00ff00);
 }
 
-.btn:active {
-  background: #666;
+.neon-btn:hover {
+  box-shadow: 0 0 15px var(--btn-color, #00ff00);
+  transform: translateY(-1px);
+}
+
+.neon-btn:active {
+  transform: translateY(0);
 }
 
 .btn-icon {
   font-size: 14px;
+}
+
+.customization {
+  border-top: 1px solid #444;
+  padding-top: 15px;
+}
+
+.customization h3 {
+  font-size: 14px;
+  margin-bottom: 10px;
+  color: #ccc;
+}
+
+.color-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.color-picker label {
+  font-size: 12px;
+  color: #ccc;
+}
+
+#neonColor {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  background: transparent;
+}
+
+#neonColor:hover{
+  transform: scale(1.1);
+  border-color: #fff;
+}
+
+.preset-colors {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+}
+
+.color-preset {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #444;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.color-preset:hover {
+  transform: scale(1.2);
+  border-color: #fff;
+}
+
+.color-preset.active {
+  border-color: #fff;
+  transform: scale(1.1);
 }
